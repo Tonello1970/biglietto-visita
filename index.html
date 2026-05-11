@@ -1,0 +1,168 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Biglietto da Visita Digitale - Prospettiva</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+<style>
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{font-family:'Segoe UI',Arial,sans-serif;background:#fff;color:#111}
+  .wrap{max-width:560px;margin:0 auto;padding:2rem 1rem}
+  .logo-row{display:flex;align-items:center;gap:12px;margin-bottom:2.5rem}
+  .brand{font-size:13px;font-weight:500;letter-spacing:.12em;text-transform:uppercase;color:#666}
+  h1{font-size:22px;font-weight:500;color:#111;margin-bottom:.4rem}
+  .sub{font-size:14px;color:#666;margin-bottom:2rem;line-height:1.6}
+  .field{margin-bottom:1.2rem}
+  label{display:block;font-size:12px;font-weight:500;letter-spacing:.08em;text-transform:uppercase;color:#666;margin-bottom:6px}
+  input{width:100%;padding:10px 14px;font-size:15px;font-family:'Segoe UI',Arial,sans-serif;border:1px solid #ddd;border-radius:8px;background:#fff;color:#111;transition:border .15s}
+  input:focus{outline:none;border-color:#999}
+  .hint{font-size:11px;color:#999;margin-top:4px}
+  .row{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+  .btn{width:100%;margin-top:1.5rem;padding:13px;font-size:14px;font-weight:500;font-family:'Segoe UI',Arial,sans-serif;letter-spacing:.06em;background:#000;color:#fff;border:none;border-radius:8px;cursor:pointer;transition:opacity .15s}
+  .btn:hover{opacity:.8}
+  .result{margin-top:2rem;padding:1.5rem;border:1px solid #eee;border-radius:12px;background:#fff;display:none}
+  .result.show{display:block}
+  .result-title{font-size:12px;font-weight:500;letter-spacing:.08em;text-transform:uppercase;color:#666;margin-bottom:1rem}
+  .qr-wrap{display:flex;flex-direction:column;align-items:center;gap:1rem}
+  #qrcode{padding:12px;border:1px solid #eee;border-radius:8px;background:#fff;display:inline-block}
+  #qrcode canvas, #qrcode img{display:block}
+  .dl-btn{display:inline-flex;align-items:center;gap:6px;padding:9px 18px;font-size:13px;font-weight:500;font-family:'Segoe UI',Arial,sans-serif;background:transparent;border:1px solid #ddd;border-radius:8px;cursor:pointer;color:#111;text-decoration:none;transition:background .15s}
+  .dl-btn:hover{background:#f5f5f5}
+  .contact-preview{margin-top:1.5rem;padding-top:1.5rem;border-top:1px solid #eee;font-size:13px;color:#666;line-height:1.8}
+  .contact-preview strong{color:#111;font-weight:500}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="logo-row">
+    <svg width="36" height="36" viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <rect x="8" y="20" width="18" height="60" rx="2" fill="#111"/>
+      <rect x="34" y="10" width="24" height="80" rx="2" fill="#111"/>
+      <rect x="66" y="2" width="26" height="96" rx="2" fill="#111"/>
+    </svg>
+    <span class="brand">Prospettiva</span>
+  </div>
+
+  <h1>Il tuo biglietto da visita digitale</h1>
+  <p class="sub">Inserisci i tuoi dati e genera il QR code da mostrare o condividere al posto del biglietto da visita fisico.</p>
+
+  <div class="row">
+    <div class="field">
+      <label>Nome</label>
+      <input type="text" id="nome" placeholder="Mario" />
+    </div>
+    <div class="field">
+      <label>Cognome</label>
+      <input type="text" id="cognome" placeholder="Rossi" />
+    </div>
+  </div>
+
+  <div class="field">
+    <label>Ruolo</label>
+    <input type="text" id="ruolo" placeholder="Account Manager" />
+  </div>
+
+  <div class="row">
+    <div class="field">
+      <label>Telefono</label>
+      <input type="tel" id="telefono" placeholder="+39 333 000 0000" />
+    </div>
+    <div class="field">
+      <label>Email</label>
+      <input type="email" id="email" placeholder="mario@prospettiva.it" />
+    </div>
+  </div>
+
+  <div class="field">
+    <label>Profilo LinkedIn</label>
+    <input type="text" id="linkedin" placeholder="mario-rossi" />
+    <div class="hint">Solo il tuo username (es. mario-rossi) oppure incolla l'URL completo</div>
+  </div>
+
+  <button class="btn" onclick="genera()">Genera QR code →</button>
+
+  <div class="result" id="result">
+    <p class="result-title">Il tuo QR code</p>
+    <div class="qr-wrap">
+      <div id="qrcode"></div>
+      <a class="dl-btn" id="dl-btn" href="#" onclick="scarica(event)">↓ Scarica immagine</a>
+    </div>
+    <div class="contact-preview" id="preview"></div>
+  </div>
+</div>
+
+<script>
+var qrInstance = null;
+
+function genera(){
+  var nome = document.getElementById('nome').value.trim();
+  var cognome = document.getElementById('cognome').value.trim();
+  var ruolo = document.getElementById('ruolo').value.trim();
+  var telefono = document.getElementById('telefono').value.trim();
+  var email = document.getElementById('email').value.trim();
+  var linkedin = document.getElementById('linkedin').value.trim();
+
+  if(!nome || !cognome || !email){
+    alert('Compila almeno nome, cognome ed email.');
+    return;
+  }
+
+  if(linkedin.indexOf('linkedin.com/in/') !== -1){
+    linkedin = linkedin.split('linkedin.com/in/')[1].replace(/\//g,'');
+  }
+
+  var lines = [
+    'BEGIN:VCARD',
+    'VERSION:3.0',
+    'N:' + cognome + ';' + nome + ';;;',
+    'FN:' + nome + ' ' + cognome,
+    'ORG:Prospettiva',
+    ruolo ? 'TITLE:' + ruolo : '',
+    telefono ? 'TEL;TYPE=CELL:' + telefono : '',
+    'EMAIL;TYPE=WORK:' + email,
+    linkedin ? 'X-SOCIALPROFILE;TYPE=linkedin:https://linkedin.com/in/' + linkedin : '',
+    'END:VCARD'
+  ].filter(Boolean);
+
+  var vcf = lines.join('\r\n');
+
+  var container = document.getElementById('qrcode');
+  container.innerHTML = '';
+
+  new QRCode(container, {
+    text: vcf,
+    width: 200,
+    height: 200,
+    colorDark: '#000000',
+    colorLight: '#ffffff',
+    correctLevel: QRCode.CorrectLevel.M
+  });
+
+  var preview = '';
+  preview += '<div><strong>' + nome + ' ' + cognome + '</strong></div>';
+  if(ruolo) preview += '<div>' + ruolo + ' · Prospettiva</div>';
+  if(telefono) preview += '<div>' + telefono + '</div>';
+  preview += '<div>' + email + '</div>';
+  if(linkedin) preview += '<div>linkedin.com/in/' + linkedin + '</div>';
+  document.getElementById('preview').innerHTML = preview;
+
+  var result = document.getElementById('result');
+  result.classList.add('show');
+  setTimeout(function(){
+    result.scrollIntoView({behavior:'smooth', block:'nearest'});
+  }, 100);
+}
+
+function scarica(e){
+  e.preventDefault();
+  var canvas = document.querySelector('#qrcode canvas');
+  if(!canvas){ alert('Genera prima il QR code.'); return; }
+  var link = document.createElement('a');
+  link.download = 'biglietto-visita-prospettiva.png';
+  link.href = canvas.toDataURL('image/png');
+  link.click();
+}
+</script>
+</body>
+</html>
